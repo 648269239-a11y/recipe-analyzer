@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 食谱分析专家</title>
+  <style>
+    body {
+      margin: 0; min-height: 100vh;
+      display: flex; justify-content: center; align-items: center;
+      background: linear-gradient(135deg, #fef3e2, #fff8f0);
+      font-family: "PingFang SC", -apple-system, sans-serif;
+    }
+    .card {
+      background: white; border-radius: 24px; padding: 48px 32px;
+      box-shadow: 0 8px 32px rgba(255,140,50,0.12);
+      text-align: center; max-width: 400px;
+    }
+    h1 { color: #e8731a; margin: 0 0 8px; font-size: 28px; }
+    p { color: #888; margin: 0 0 24px; font-size: 15px; }
+    .spinner {
+      width: 40px; height: 40px; margin: 24px auto;
+      border: 3px solid #f0f0f0; border-top: 3px solid #e8731a;
+      border-radius: 50%; animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error { color: #999; font-size: 14px; margin-top: 16px; }
+    .btn {
+      display: inline-block; margin-top: 20px; padding: 12px 32px;
+      background: #e8731a; color: white; border-radius: 50px;
+      text-decoration: none; font-size: 16px; border: none; cursor: pointer;
+    }
+    .btn:hover { background: #d4620a; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🍳 AI 食谱分析专家</h1>
+    <p id="status">正在连接...</p>
+    <div id="loading" class="spinner"></div>
+    <div id="error" class="error" style="display:none">
+      服务正在启动中，请稍后再试<br>
+      <a href="javascript:location.reload()" class="btn">重新连接</a>
+    </div>
+  </div>
+
+  <script>
+    const SERVEO_URL_KEY = 'recipe_analyzer_serveo_url';
+    let savedUrl = localStorage.getItem(SERVEO_URL_KEY);
+
+    async function checkUrl(url) {
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+        const resp = await fetch(url + '?t=' + Date.now(), {
+          method: 'HEAD',
+          mode: 'no-cors',
+          signal: controller.signal
+        });
+        clearTimeout(timeout);
+        return true;
+      } catch(e) {
+        return false;
+      }
+    }
+
+    async function init() {
+      // 尝试已保存的 URL
+      if (savedUrl) {
+        document.getElementById('status').textContent = '正在连接已保存的服务...';
+        if (await checkUrl(savedUrl)) {
+          window.location.href = savedUrl;
+          return;
+        }
+      }
+
+      // 尝试已知的 serveo URL
+      const urls = JSON.parse(localStorage.getItem('recipe_urls') || '[]');
+      for (const url of urls) {
+        if (await checkUrl(url)) {
+          localStorage.setItem(SERVEO_URL_KEY, url);
+          window.location.href = url;
+          return;
+        }
+      }
+
+      // 失败
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('error').style.display = 'block';
+      document.getElementById('status').textContent = '服务未运行';
+    }
+
+    init();
+  </script>
+</body>
+</html>
