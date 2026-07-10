@@ -75,7 +75,7 @@
       }
 
       // 尝试已知的 serveo URL
-      const urls = JSON.parse(localStorage.getItem('recipe_urls') || '[]');
+      const urls = ['https://dd30ab6656337109-152-136-99-208.serveousercontent.com'].concat(JSON.parse(localStorage.getItem('recipe_urls') || '[]'));
       for (const url of urls) {
         if (await checkUrl(url)) {
           localStorage.setItem(SERVEO_URL_KEY, url);
